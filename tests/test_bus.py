@@ -5,11 +5,14 @@ import os
 import tempfile
 from pathlib import Path
 
+# Ensure backup bus package takes precedence over installed sahiixx-bus
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 # Add sovereign_swarm from Downloads to path
 sys.path.insert(0, "/mnt/c/Users/Sahil Khan/Downloads")
 
 from sovereign_swarm import (
-    SwarmBus, SwarmMemory, SafetyCouncil, RBACGuard, Permission,
+    SwarmBus, SwarmMemory, SafetyCouncil, RBACGuard, RBACPermission,
     EconomicEngine, BudgetController, MCPServer, A2ACardServer,
     MetaOrchestrator, AgentProfile,
 )
@@ -54,10 +57,11 @@ class TestRunner:
         self.check("safety_allows_clean", not safety.scan("hello world", 0.5)["blocked"])
 
         rbac = RBACGuard()
-        rbac.assign("admin", "admin")
-        self.check("rbac_admin_has_spawn", rbac.check("admin", Permission.SPAWN))
-        self.check("rbac_admin_has_kill", rbac.check("admin", Permission.KILL))
-        self.check("rbac_viewer_no_kill", not rbac.check("viewer", Permission.KILL))
+        rbac.add_role("admin", {RBACPermission.AGENT_SPAWN, RBACPermission.KILL, RBACPermission.ADMIN})
+        rbac.assign_role("admin", "admin")
+        self.check("rbac_admin_has_spawn", rbac.check("admin", RBACPermission.AGENT_SPAWN))
+        self.check("rbac_admin_has_kill", rbac.check("admin", RBACPermission.KILL))
+        self.check("rbac_viewer_no_kill", not rbac.check("viewer", RBACPermission.KILL))
 
         econ = EconomicEngine()
         econ.record_cost("test", 0.05, "a1")

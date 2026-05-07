@@ -27,7 +27,7 @@ from sovereign_swarm import (
     HealEngine,
     HealStrategy,
     RBACGuard,
-    Permission,
+    RBACPermission,
     ClusterNode,
     ClusterManager,
     MCPServer,
@@ -59,7 +59,7 @@ __all__ = [
     "EconomicEngine", "BudgetController",
     "EvolutionEngine",
     "AgentProfile", "MetaOrchestrator", "ReputationEngine", "HealEngine", "HealStrategy",
-    "RBACGuard", "Permission", "ClusterNode", "ClusterManager",
+    "RBACGuard", "RBACPermission", "ClusterNode", "ClusterManager",
     "MCPServer", "A2ACardServer", "HermesMessenger", "SwarmBridge", "OpenClawGateway",
     "ObservabilityLayer", "AlertDispatcher", "AuditTrail", "BackupManager", "StateManager",
     # Bridges
