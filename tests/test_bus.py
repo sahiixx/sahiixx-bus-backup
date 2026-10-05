@@ -1,17 +1,13 @@
 """Tests for sahiixx-bus — unified orchestration layer."""
 import asyncio
 import sys
-import os
 import tempfile
 from pathlib import Path
 
-# Ensure backup bus package takes precedence over installed sahiixx-bus
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import pytest
+import sahiixx_bus
 
-# Add sovereign_swarm from Downloads to path
-sys.path.insert(0, "/mnt/c/Users/Sahil Khan/Downloads")
-
-from sovereign_swarm import (
+from sahiixx_bus import (
     SwarmBus, SwarmMemory, SafetyCouncil, RBACGuard, RBACPermission,
     EconomicEngine, BudgetController, MCPServer, A2ACardServer,
     MetaOrchestrator, AgentProfile,
@@ -21,8 +17,9 @@ from sahiixx_bus.a2a_router import A2ARouter, AgentEntry
 from sahiixx_bus.mcp_gateway import MCPGateway
 
 
-class TestRunner:
-    def __init__(self):
+class BusTestRunner:
+    def __init__(self, tmp_path):
+        self.tmp_path = tmp_path
         self.passed = 0
         self.failed = 0
 
@@ -38,14 +35,14 @@ class TestRunner:
         print("\n[UNIT TESTS]")
 
         # Core primitives re-exported from sovereign_swarm
-        bus = SwarmBus(Path(tempfile.mkdtemp()) / "bus_test.db")
+        bus = SwarmBus(self.tmp_path / "bus_test.db")
         await bus.init()
         await bus.publish("test.topic", {"msg": "hello"})
         msgs = await bus.history("test.topic")
         self.check("bus_publish_and_history", len(msgs) >= 1 and msgs[0]["msg"] == "hello")
         await bus.close()
 
-        mem = SwarmMemory(Path(tempfile.mkdtemp()) / "mem_test.db")
+        mem = SwarmMemory(self.tmp_path / "mem_test.db")
         await mem.init()
         await mem.store("key1", {"data": "value1"}, tags="test")
         found = await mem.search("value1")
@@ -138,7 +135,42 @@ class TestRunner:
         return self.failed == 0
 
 
+@pytest.fixture
+def runner(tmp_path):
+    return BusTestRunner(tmp_path)
+
+
+def test_public_exports():
+    for name in sahiixx_bus.__all__:
+        assert hasattr(sahiixx_bus, name), name
+
+
+@pytest.mark.asyncio
+async def test_core_primitives(runner):
+    await runner.run_unit()
+    assert runner.failed == 0
+
+
+@pytest.mark.asyncio
+async def test_bridges(runner):
+    await runner.run_bridges()
+    assert runner.failed == 0
+
+
+@pytest.mark.asyncio
+async def test_router(runner):
+    await runner.run_router()
+    assert runner.failed == 0
+
+
+@pytest.mark.asyncio
+async def test_gateway(runner):
+    await runner.run_gateway()
+    assert runner.failed == 0
+
+
 if __name__ == "__main__":
-    runner = TestRunner()
-    ok = asyncio.run(runner.run_all())
+    with tempfile.TemporaryDirectory() as tmp:
+        runner = BusTestRunner(Path(tmp))
+        ok = asyncio.run(runner.run_all())
     sys.exit(0 if ok else 1)
