@@ -9,6 +9,7 @@ description = "Unified orchestration bus connecting the SAHIIXX ecosystem"
 requires-python = ">=3.11"
 dependencies = [
     "aiohttp>=3.9",
+    "sovereign-swarm @ git+https://github.com/sahiixx/sovereign-swarm-v2.git@d2b1e0263d64e2bbd8dd76b3ca15ec5412aed543",
 ]
 
 [project.optional-dependencies]
